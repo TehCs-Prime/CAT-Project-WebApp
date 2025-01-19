@@ -1,37 +1,82 @@
-document.querySelectorAll('.decrement').forEach((btn) => {
+const cartItems = [
+  {
+    name: "Little Cupid Long Dress",
+    size: "Free Size",
+    image: "./Sources/Product%20thumnail%20pic.png",
+    price: 79.00,
+    quantity: 1
+  },
+  {
+    name: "[X'mas Gift Set 2] T-shirt + Cap + Socks",
+    size: "Creamy Red (XL), Black, Red Stripe",
+    image: "./Sources/Profile-thumbnail%20pic2.png",
+    price: 85.00,
+    quantity: 1
+  }
+];
+
+// Function to populate cart items dynamically
+function populateCart() {
+  const cartTableBody = document.getElementById('cart-items');
+  cartTableBody.innerHTML = ''; // Clear existing content
+
+  cartItems.forEach(item => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+            <td class="product">
+                <div>
+                    <h3>${item.name}</h3>
+                </div>
+            </td>
+            <td class="quantity">
+                <button class="decrement">-</button>
+                <input type="number" value="${item.quantity}" min="1">
+                <button class="increment">+</button>
+            </td>
+            <td class="price">RM ${item.price.toFixed(2)}</td>
+        `;
+    cartTableBody.appendChild(row);
+  });
+
+  // Add event listeners after the elements are created
+  attachQuantityControls();
+}
+
+// Separate function to attach event listeners
+function attachQuantityControls() {
+  // Decrement button listeners
+  document.querySelectorAll('.decrement').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       const input = e.target.nextElementSibling;
       const currentValue = parseInt(input.value);
 
       if (currentValue > 1) {
-      input.value = currentValue - 1;
-      updateTotals();
-    } else if (currentValue === 1) {
-      
-      const row = e.target.closest('tr');
-      
-      // Show confirmation dialog
-      if (confirm('Are you sure you want to remove this item from your cart?')) {
-        
-        row.style.transition = 'opacity 0.3s';
-        row.style.opacity = '0';
-        
-        setTimeout(() => {
-          row.remove();
-          updateTotals();
-          
-          // Check if cart is empty
-          const remainingItems = document.querySelectorAll('tbody tr');
-          if (remainingItems.length === 0) {
-            const cartTable = document.querySelector('.cart-table');
-            cartTable.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Your cart is empty</td></tr>';
-          }
-        }, 300);
+        input.value = currentValue - 1;
+        updateTotals();
+      } else if (currentValue === 1) {
+        const row = e.target.closest('tr');
+
+        if (confirm('Are you sure you want to remove this item from your cart?')) {
+          row.style.transition = 'opacity 0.3s';
+          row.style.opacity = '0';
+
+          setTimeout(() => {
+            row.remove();
+            updateTotals();
+
+            // Check if cart is empty
+            const remainingItems = document.querySelectorAll('tbody tr');
+            if (remainingItems.length === 0) {
+              const cartTable = document.querySelector('.cart-table');
+              cartTable.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Your cart is empty</td></tr>';
+            }
+          }, 300);
+        }
       }
-    }
+    });
   });
-});
-  
+
+  // Increment button listeners
   document.querySelectorAll('.increment').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       const input = e.target.previousElementSibling;
@@ -39,138 +84,40 @@ document.querySelectorAll('.decrement').forEach((btn) => {
       updateTotals();
     });
   });
-  
+
+  // Input field listeners
   document.querySelectorAll('.quantity input').forEach((input) => {
     input.addEventListener('input', (e) => {
-      // Ensure the value is at least 1
       let value = parseInt(e.target.value) || 1;
       if (value < 1) value = 1;
       e.target.value = value;
       updateTotals();
     });
-  
-    // Prevent invalid input
+
     input.addEventListener('keypress', (e) => {
       if (!/[0-9]/.test(e.key)) {
         e.preventDefault();
       }
     });
   });
+}
 
-  function updateTotals() {
-    const rows = document.querySelectorAll('tbody tr');
-    let orderValue = 0;
-  
-    rows.forEach((row) => {
-      const price = parseFloat(row.querySelector('.price').textContent.replace('RM', ''));
-      const quantity = parseInt(row.querySelector('input').value);
-      orderValue += price * quantity;
-    });
-  
-    document.querySelector('.order-summary-value span').textContent = `RM ${orderValue.toFixed(2)}`;
-    document.querySelector('.subtotal').textContent = `RM ${(orderValue - 4).toFixed(2)}`;
-  }
-  
-// Get modal elements
-const modal = document.getElementById('voucherModal');
-const closeBtn = document.querySelector('.close');
-const voucherSection = document.querySelector('.voucher-section');
+// Call function to populate cart when the page loads
+window.onload = populateCart;
 
-// Open modal when clicking on voucher section
-voucherSection.addEventListener('click', () => {
-  modal.style.display = 'block';
-});
+// Function to update order totals
+function updateTotals() {
+  const rows = document.querySelectorAll('tbody tr');
+  let orderValue = 0;
 
-// Close modal when clicking on X
-closeBtn.addEventListener('click', () => {
-  modal.style.display = 'none';
-});
-
-// Close modal when clicking outside
-window.addEventListener('click', (e) => {
-  if (e.target === modal) {
-    modal.style.display = 'none';
-  }
-});
-
-// Handle discount code application
-const applyBtn = document.querySelector('.apply-btn');
-const discountInput = document.getElementById('discountCode');
-
-applyBtn.addEventListener('click', () => {
-  const code = discountInput.value.trim();
-  if (code) {
-    // Here you would typically validate the code with your backend
-    // For now, we'll just show an alert
-    alert('Discount code applied: ' + code);
-    modal.style.display = 'none';
-    
-    // Update the discount in the cart summary (example)
-    document.querySelector('.discount').textContent = '- RM 100.00';
-    updateTotals();
-  } else {
-    alert('Please enter a discount code');
-  }
-});
-
-const checkoutBtn = document.querySelector('.checkout-btn');
-const checkoutDetails = document.querySelector('.checkout-details');
-const placeOrderBtn = document.querySelector('.place-order-btn');
-
-checkoutBtn.addEventListener('click', () => {
-  // Scroll to checkout details smoothly
-  checkoutDetails.style.display = 'block';
-  checkoutDetails.scrollIntoView({ behavior: 'smooth' });
-  
-  checkoutBtn.style.visibility = 'hidden';
-});
-
-// Handle payment option selection
-const paymentOptions = document.querySelectorAll('.payment-option');
-paymentOptions.forEach(option => {
-  option.addEventListener('click', () => {
-    // Find the radio input within the clicked option and check it
-    const radio = option.querySelector('input[type="radio"]');
-    radio.checked = true;
-    
-    // Add selected styling
-    paymentOptions.forEach(opt => opt.style.borderColor = '#ddd');
-    option.style.borderColor = '#66afe9';
+  rows.forEach((row) => {
+    const price = parseFloat(row.querySelector('.price').textContent.replace('RM', '').trim());
+    const quantity = parseInt(row.querySelector('input').value);
+    orderValue += price * quantity;
   });
-});
 
-// Form validation before placing order
-placeOrderBtn.addEventListener('click', (e) => {
-  e.preventDefault();
-  
-  // Get all required inputs
-  const requiredInputs = document.querySelectorAll('.form-group input[required], .form-group select[required], .form-group textarea[required]');
-  let isValid = true;
-  
-  // Check if all required fields are filled
-  requiredInputs.forEach(input => {
-    if (!input.value.trim()) {
-      isValid = false;
-      input.style.borderColor = '#ff0000';
-    } else {
-      input.style.borderColor = '#ddd';
-    }
-  });
-  
-  // Check if payment method is selected
-  const paymentMethod = document.querySelector('input[name="payment"]:checked');
-  if (!paymentMethod) {
-    isValid = false;
-    alert('Please select a payment method');
-    return;
-  }
-  
-  if (isValid) {
-    // Here you would typically submit the order to your backend
-    alert('Order placed successfully!');
-    window.location.href = 'UserProfile.html';
-    // Return to home page ? or to order history
-  } else {
-    alert('Please fill in all required fields');
-  }
-});
+  document.querySelector('.order-summary-value span').textContent = `RM ${orderValue.toFixed(2)}`;
+  const discount = 4; // You can adjust this if you have a dynamic discount calculation
+  document.querySelector('.discount').textContent = `- RM ${discount.toFixed(2)}`;
+  document.querySelector('.subtotal').textContent = `RM ${(orderValue - discount).toFixed(2)}`;
+}
